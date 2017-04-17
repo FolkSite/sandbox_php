@@ -2,7 +2,8 @@
 
 abstract class Expression
 {
-
+    // статичная переменная работает как хранилище данные, без необходимости 
+    // создавать объект класса Expression
     private static $keycount = 0;
     private $key;
 
@@ -15,6 +16,12 @@ abstract class Expression
             $this->key = self::$keycount;
         }
         return $this->key;
+    }
+    
+    // возвращает содержимое статичной переменной
+    public static function getKeycount()
+    {
+        return self::$keycount;
     }
 
 }
@@ -167,6 +174,8 @@ foreach (array("Четыре", "4", "52") as $val) {
     }
     //var_dump($context->getData());
 }
+
+var_dump(Expression::getKeycount());
 
 
 
