@@ -1,6 +1,7 @@
 <?php
 /**
  * синглтон позволяет избежать использования глобальных переменных
+ * данные хронятся как бы в кэше
  */
 class Preference{
     private $props = array();
@@ -13,11 +14,13 @@ class Preference{
     }
     
     public static function getInstance() {
+        // проверяет, был ли уже создан объект и если нет, то создает его
         if (empty(self::$instance)) {
             // класс с закрытым конструктором может сам
             // себя создать
             self::$instance = new Preference();
         }
+        // возвращает ссылку на созданный объект
         return self::$instance;
     }
     
@@ -33,6 +36,7 @@ class Preference{
 $pref = Preference::getInstance();
 $pref->setProperty("name", "Иван");
 
+// объект получен по ссылке, поэтому, при уничтожении переменной - объект остается
 unset($pref);
 
 $pref2 = Preference::getInstance();
