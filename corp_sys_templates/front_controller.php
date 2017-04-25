@@ -1,0 +1,226 @@
+<?php
+
+namespace woo\controller;
+
+class Controller
+{
+
+    private $applicationHelper;
+
+    private function __construct()
+    {
+        
+    }
+
+    static function run()
+    {
+        $instance = new Controller();
+        $instance->init();
+        $instance->handleRequest();
+    }
+
+    public function init()
+    {
+        // в этом классе хранятся данные конфигурации для всего приложения
+        $this->applicationHelper = ApplicationHelper::instance();
+        $this->applicationHelper->init();
+    }
+
+    public function handleRequest()
+    {
+        $request = \woo\base\ApplicationRegistry::getRequest();
+        $cmd_r = new woo\command\CommandResolve();
+        $cmd = $cmd_r0 > getCommand($request);
+        $cmd->execute($request);
+    }
+
+}
+
+// в этом классе хранятся данные конфигурации для всего приложения
+// провел рефракторинг, чтобы не создавать два синглтона, убрал зависимость 
+// от ApplicationRegistryсделал класс системным реестром
+// кажется, так себе реализация, можно было вместо копирования кода сделать наследование
+// но я не понял, будет ли по задумке автора в приложении вообще использоваться 
+// файл registry.php
+class ApplicationHelper extends \woo\base\Registry
+{
+
+    private static $instance = null;
+    private $config = "data/woo_options.xml";
+    private $freezedir = "data";
+    private $values = array();
+    // массив с информацией о времени изменения файлов сохранения
+    private $mtime = array();
+
+    private function __construct()
+    {
+        
+    }
+    
+    static function instance()
+    {
+        if (is_null(self::$instance)) {
+            self::$instance = new self();
+        }
+        
+        return self::$instance;
+    }
+
+    public function init()
+    {
+        $dsn = self::getDSN();
+
+        if (!is_null($dsn)) {
+            return;
+        }
+
+        $this->getOptions();
+    }
+
+    private function getOptions()
+    {
+        $this->ensure(file_exists($this->config), "Файл конфигурации не найден");
+        $options = @SimpleXml_load_file($this->config);
+        $dsn = (string) $options->dsn;
+        $this->ensure($options instanceof \SimpleXMLElement, "Файл конфигурации испорчен");
+        $this->ensure($dsn, "DSN не найден");
+        self::setDSN($dsn);
+        // Установите другие значения
+    }
+    
+    // централизованная проверка условия и вызов исключения
+    private function ensure($expr, $message)
+    {
+        if (!$expr) {
+            throw new \woo\base\AppException($message);
+        }
+    }
+    
+    protected function get($key)
+    {
+        $path = $this->freezedir . DIRECTORY_SEPARATOR . $key;
+        if (file_exists($path)) {
+            clearstatcache();
+            $mtime = filemtime($path);
+            
+            if (!isset($this->mtime[$key])) {
+                $this->mtime[$key] = 0;
+            }
+            
+            // проверяет, был ли файл изменен с момента последнего сохранения
+            if ($mtime > $this->mtime[$key]) {
+                $data = file_get_contents($path);
+                $this->mtime[$key] = $mtime;
+                return ($this->values[$key] = unserialize($data));
+            }
+        }
+        
+        if (isset($this->values[$key])) {
+            return $this->values[$key];
+        }
+        
+        return null;
+    }
+    
+    protected function set($key, $val)
+    {
+        $this->values[$key] = $val;
+        $path = $this->freezedir . DIRECTORY_SEPARATOR . $key;
+        file_put_contents($path, serialize($val));
+        $this->mtime[$key] = time();
+    }
+    
+    static function setDSN($dsn)
+    {
+        return self::$instance()->set("dsn", $dsn);
+    }
+    
+    static function getDSN()
+    {
+        return self::$instance->get("dsn");
+    }
+    
+    // только один эксземпляр объекта Request будет доступен всем элементам приложения
+    static function getRequest()
+    {
+        $inst = self::$instance();
+        // блокировка, чтобы существовал только один эксземпляр объекта Reques
+        if (is_null($inst->request)) {
+            $inst->request = new \woo\controller\Request();
+        }
+        
+        return $inst->request;
+    }
+
+}
+
+namespace woo\command;
+
+class CommandResolve
+{
+    private static $base_cmd = null;
+    private static $default_cmd = null;
+    
+    public function __construct()
+    {
+        if (is_null(self::$base_cmd)) {
+            // ReflectionClass возвращает информацию о классе, 
+            // вернет объект из которого можно получить имя класса $base_cmd->name
+            self::$base_cmd = new ReflectionClass("\woo\command\Command");
+            self::$default_cmd = new DefaultCommand();
+        };
+    }
+    
+    public function  getCommand(\woo\controller\Request $request)
+    {
+        $cmd = $request->getProperty('cmd');
+        $sep = DIRECTORY_SEPARATOR;
+        
+        if (!$cmd) {
+            return self::$default_cmd;
+        }
+        
+        // удаляет элементы пути. Защита, чтобы нельзя было получит доступ к файлам
+        // из других директорий
+        $cmd = str_replace(array('.', $sep), "", $cmd);
+        $filepath = "woo{$sep}command{$sep}{$cmd}.php";
+        $classname = "woo\\command\\$cmd";
+        
+        if (file_exists($filepath)) {
+            @require_once($filepath);
+            
+            if (class_exists($class_name)) {
+                $cmd_class = new ReflectionClass($classname);
+                
+                // isSubClassOf проверяет является ли класс подклассом
+                if ($cmd_class->isSubClassOf(self::$base_cmd)) {
+                    // newInstance (метод объекта ReflectionClass) создает экземпляр класса $classname
+                    return $cmd_class->newInstance();
+                } else {
+                    $request->addFeedback("Объект Command команды '$cmd' не найден");
+                }
+            }
+        }
+        
+        $request->addFeedback("Команда '$cmd' не найден");
+        return clone self::$default_cmd;
+    }
+}
+
+namespace woo\command;
+
+abstract class Comand
+{
+    // объявляя метод конструктора как final, мы не даем дочерним класс его переопределять
+    final function __construct()
+    {
+        
+    }
+    
+    function exexute(\woo\controller\Requesr $request)
+    {
+        $this->doExecute($request);
+    }
+    
+    abstract function doExecute(\woo\controller\Requesr $request);
+}
