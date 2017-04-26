@@ -263,3 +263,4 @@ $main_army->accept($taxcollector);
 //echo $textdump->getText();
 echo $taxcollector->getReport() . "<br>";
 echo $taxcollector->getTax() . "<br>";
+

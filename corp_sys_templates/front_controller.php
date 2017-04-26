@@ -56,13 +56,13 @@ class ApplicationHelper extends \woo\base\Registry
     {
         
     }
-    
+
     static function instance()
     {
         if (is_null(self::$instance)) {
             self::$instance = new self();
         }
-        
+
         return self::$instance;
     }
 
@@ -87,7 +87,7 @@ class ApplicationHelper extends \woo\base\Registry
         self::setDSN($dsn);
         // Установите другие значения
     }
-    
+
     // централизованная проверка условия и вызов исключения
     private function ensure($expr, $message)
     {
@@ -95,18 +95,18 @@ class ApplicationHelper extends \woo\base\Registry
             throw new \woo\base\AppException($message);
         }
     }
-    
+
     protected function get($key)
     {
         $path = $this->freezedir . DIRECTORY_SEPARATOR . $key;
         if (file_exists($path)) {
             clearstatcache();
             $mtime = filemtime($path);
-            
+
             if (!isset($this->mtime[$key])) {
                 $this->mtime[$key] = 0;
             }
-            
+
             // проверяет, был ли файл изменен с момента последнего сохранения
             if ($mtime > $this->mtime[$key]) {
                 $data = file_get_contents($path);
@@ -114,14 +114,14 @@ class ApplicationHelper extends \woo\base\Registry
                 return ($this->values[$key] = unserialize($data));
             }
         }
-        
+
         if (isset($this->values[$key])) {
             return $this->values[$key];
         }
-        
+
         return null;
     }
-    
+
     protected function set($key, $val)
     {
         $this->values[$key] = $val;
@@ -129,17 +129,17 @@ class ApplicationHelper extends \woo\base\Registry
         file_put_contents($path, serialize($val));
         $this->mtime[$key] = time();
     }
-    
+
     static function setDSN($dsn)
     {
         return self::$instance()->set("dsn", $dsn);
     }
-    
+
     static function getDSN()
     {
         return self::$instance->get("dsn");
     }
-    
+
     // только один эксземпляр объекта Request будет доступен всем элементам приложения
     static function getRequest()
     {
@@ -148,7 +148,7 @@ class ApplicationHelper extends \woo\base\Registry
         if (is_null($inst->request)) {
             $inst->request = new \woo\controller\Request();
         }
-        
+
         return $inst->request;
     }
 
@@ -156,11 +156,13 @@ class ApplicationHelper extends \woo\base\Registry
 
 namespace woo\command;
 
+// решает, как интерпретировать HTTP запрос
 class CommandResolve
 {
+
     private static $base_cmd = null;
     private static $default_cmd = null;
-    
+
     public function __construct()
     {
         if (is_null(self::$base_cmd)) {
@@ -170,28 +172,28 @@ class CommandResolve
             self::$default_cmd = new DefaultCommand();
         };
     }
-    
-    public function  getCommand(\woo\controller\Request $request)
+
+    public function getCommand(\woo\controller\Request $request)
     {
         $cmd = $request->getProperty('cmd');
         $sep = DIRECTORY_SEPARATOR;
-        
+
         if (!$cmd) {
             return self::$default_cmd;
         }
-        
+
         // удаляет элементы пути. Защита, чтобы нельзя было получит доступ к файлам
         // из других директорий
         $cmd = str_replace(array('.', $sep), "", $cmd);
         $filepath = "woo{$sep}command{$sep}{$cmd}.php";
         $classname = "woo\\command\\$cmd";
-        
+
         if (file_exists($filepath)) {
             @require_once($filepath);
-            
+
             if (class_exists($class_name)) {
                 $cmd_class = new ReflectionClass($classname);
-                
+
                 // isSubClassOf проверяет является ли класс подклассом
                 if ($cmd_class->isSubClassOf(self::$base_cmd)) {
                     // newInstance (метод объекта ReflectionClass) создает экземпляр класса $classname
@@ -201,26 +203,89 @@ class CommandResolve
                 }
             }
         }
-        
+
         $request->addFeedback("Команда '$cmd' не найден");
         return clone self::$default_cmd;
     }
+
 }
 
 namespace woo\command;
 
-abstract class Comand
+abstract class Command
 {
+
     // объявляя метод конструктора как final, мы не даем дочерним класс его переопределять
     final function __construct()
     {
         
     }
-    
+
     function exexute(\woo\controller\Requesr $request)
     {
         $this->doExecute($request);
     }
-    
+
     abstract function doExecute(\woo\controller\Requesr $request);
+}
+
+namespace woo\controller;
+
+// хранилище данных для уровня представления и генерации ответов
+// не позволяет другим классам напрямую обращаться к суперглобальным массивам
+// чтобы централизовать работу с ними в одном классе, где можно применить к ним 
+// фильтры и другии функции обработки
+class Request
+{
+
+    private $properties;
+    // канал связи для передачии информации из классов-контроллеров пользователю
+    private $feedback = array();
+
+    public function __construct()
+    {
+        $this->init();
+    }
+
+    public function init()
+    {
+        if (isset($_SERVER['REQUEST_METHOD'])) {
+            // $_REQUEST поумолчанию содержит данные суперглобальных переменных
+            $this->properties = $_REQUEST;
+            return;
+        }
+
+        foreach ($_SERVER['argv'] as $arg) {
+            if (strpos($arg, "=")) {
+                // присваивает переменным из списка значения
+                list($key, $val) = explode("=", $arg);
+                $this->setProperty($key, $val);
+            }
+        }
+    }
+
+    public function getProperty($key)
+    {
+        if (isset($this->properties[$key])) {
+            return $this->properties[$key];
+        }
+
+        return null;
+    }
+    
+    public function setProperty($key, $val)
+    {
+        $this->properties[$key] = $val;
+    }
+    
+    public function addFeedback($msg)
+    {
+        array_push($this->feedback, $msg);
+    }
+    
+    public function getFeedbackString($separator="<br>")
+    {
+        return implode($separator, $this->feedback);
+    }
+
 }
