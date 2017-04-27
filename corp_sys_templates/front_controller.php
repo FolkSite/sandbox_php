@@ -7,6 +7,7 @@ class Controller
 
     private $applicationHelper;
 
+    // закрытый конструктор
     private function __construct()
     {
         
@@ -37,8 +38,9 @@ class Controller
 }
 
 // в этом классе хранятся данные конфигурации для всего приложения
+// необязательный для шаблона фронт контроллер
 // провел рефракторинг, чтобы не создавать два синглтона, убрал зависимость 
-// от ApplicationRegistryсделал класс системным реестром
+// от ApplicationRegistry сделал класс системным реестром
 // кажется, так себе реализация, можно было вместо копирования кода сделать наследование
 // но я не понял, будет ли по задумке автора в приложении вообще использоваться 
 // файл registry.php
@@ -70,6 +72,7 @@ class ApplicationHelper extends \woo\base\Registry
     {
         $dsn = self::getDSN();
 
+        // если настройки уже получены, то $this->getOptions() не будет вызываться повторно
         if (!is_null($dsn)) {
             return;
         }
@@ -80,7 +83,9 @@ class ApplicationHelper extends \woo\base\Registry
     private function getOptions()
     {
         $this->ensure(file_exists($this->config), "Файл конфигурации не найден");
+        // возвращает объект
         $options = @SimpleXml_load_file($this->config);
+        // приведение типа ответа к строке
         $dsn = (string) $options->dsn;
         $this->ensure($options instanceof \SimpleXMLElement, "Файл конфигурации испорчен");
         $this->ensure($dsn, "DSN не найден");
@@ -229,6 +234,16 @@ abstract class Command
     abstract function doExecute(\woo\controller\Requesr $request);
 }
 
+// автоматический выбирается классом CommandResolver, если нет явного запроса
+class DefaultCommand extends woo\command\Command
+{
+    public function doExecute(\woo\controller\Requesr $request)
+    {
+        $request->addFeedback("Добро пожаловать в Woo!");
+        include ('woo/view/main.php');
+    }
+}
+
 namespace woo\controller;
 
 // хранилище данных для уровня представления и генерации ответов
@@ -272,18 +287,18 @@ class Request
 
         return null;
     }
-    
+
     public function setProperty($key, $val)
     {
         $this->properties[$key] = $val;
     }
-    
+
     public function addFeedback($msg)
     {
         array_push($this->feedback, $msg);
     }
-    
-    public function getFeedbackString($separator="<br>")
+
+    public function getFeedbackString($separator = "<br>")
     {
         return implode($separator, $this->feedback);
     }
