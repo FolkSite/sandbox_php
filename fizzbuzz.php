@@ -1,5 +1,11 @@
 <?php
-/*
+/**
+ * Выводит на экран числа от 1 до 100. При этом вместо чисел, кратных трем, 
+ * программа должна выводить слово «Fizz», а вместо чисел, кратных пяти — слово 
+ * «Buzz». Если число кратно и 3, и 5, то программа должна выводить слово «FizzBuzz»
+ */
+
+/**
  * Генерирует исключения
  */
 class FizzBuzzException extends Exception
@@ -8,7 +14,7 @@ class FizzBuzzException extends Exception
 }
 
 /**
- * Тут должно быть описание класса и аргументов
+ * Генерирует ответ для задачи
  */
 class FizzBuzz
 {
@@ -18,7 +24,15 @@ class FizzBuzz
     private $secondWord;
     private $firstWordTrigger;
     private $secondWordTrigger;
-
+    
+    /**
+     * Конструктор FizzBuzz
+     * @param int $numberCycles количество итераций
+     * @param string $firstWord первое слово
+     * @param string $secondWord второе слово
+     * @param int $firstWordTrigger номер итерации для вывода первого слова
+     * @param int $secondWordTrigger номер итерации для вывода второго слова
+     */
     function __construct(int $numberCycles, string $firstWord, string $secondWord, int $firstWordTrigger, int $secondWordTrigger)
     {
         $this->numberCycles = $numberCycles;
@@ -27,8 +41,12 @@ class FizzBuzz
         $this->firstWordTrigger = $firstWordTrigger;
         $this->secondWordTrigger = $secondWordTrigger;
     }
-
-    public function startCycle()
+    
+    /**
+     * Запускает цикл
+     * @return array - массив с результатам выполнения цикла
+     */
+    public function getCycleResult()
     {
         $cycleArray = array();
 
@@ -51,14 +69,19 @@ class FizzBuzz
 }
 
 /**
- * Тут должно быть описание класса и аргументов
+ * Представление FizzBuzz
  */
 class ViewFizzBuzz
 {
-
+    
+    /**
+     * Выводит на экран по строкам содержимое полученного массива
+     * @param FizzBuzz $FizzBuzz
+     * @throws FizzBuzzException
+     */
     public static function printFizzBuzz(FizzBuzz $FizzBuzz)
     {
-        $cycleArray = $FizzBuzz->startCycle();
+        $cycleArray = $FizzBuzz->getCycleResult();
 
         if (empty($cycleArray)) {
             throw new FizzBuzzException("Не смог получить информацию для отображения");
