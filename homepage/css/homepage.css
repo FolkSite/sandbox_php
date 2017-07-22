@@ -1,0 +1,54 @@
+@media screen and (min-width: 768px) {
+    .jumbotron h1,
+    .jumbotron .h1 {
+        font-size: 34px;
+    }
+}
+
+ul.soc-network-list {
+    margin: 0;
+    padding-left: 0px;
+}
+
+ul.soc-network-list li {
+    display: inline-block;
+
+}
+
+ul.soc-network-list li a{
+    display: block;
+    height: 100%;
+    width: 100%;
+
+}
+
+.soc-network-icon {
+    width: 48px;
+    height: 48px;
+    opacity: 0.5;
+}
+
+.soc-network-icon:hover {
+    opacity: 1;
+}
+
+.github-icon {
+    background: url('/img/github-icon-48px.png') no-repeat;
+}
+
+.telegram-icon {
+    background: url('/img/telegram-icon-48px.png') no-repeat;
+}
+
+.mail-icon {
+    background: url('/img/mail-icon-48px.png') no-repeat;
+}
+
+.vk-icon {
+    background: url('/img/vk-icon-48px.png') no-repeat;
+}
+
+.avatar {
+    float: left;
+    padding-right: 20px;
+}

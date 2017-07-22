@@ -1,0 +1,20 @@
+@media screen and (min-width: 768px) {
+    .jumbotron h1,
+    .jumbotron .h1 {
+        font-size: 34px;
+    }
+}
+
+.jumbotron-icons i:hover {
+    color: #000;
+}
+
+.jumbotron-icons a {
+    color: #555;
+    text-decoration: none;
+
+    &:hover {
+        color: #000;
+        text-decoration: underline;
+    }
+}

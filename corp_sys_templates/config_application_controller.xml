@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+
+
+<control>
+    <view>main</view>
+    <view status="CMD_OK">main</view>
+    <view status="CMD_ERROR">error</view>
+    
+    <command name="ListVenues">
+        <view>listvenues</view>
+    </command>
+    
+    <command name="QuickAddVenue">
+        <classroot name="AddVenue" />
+        <view>quickadd</view>
+    </command>
+    
+    <command name="AddVenue">
+        <view>addvenue</view>
+        <status value="CMD_OK">
+            <forward>AddSpace</forward>
+        </status>
+    </command>
+    
+    <command name="AddSpace">
+        <view>addspace</view>
+        <status value="CMD_OK">
+            <forward>ListVenues</forward>
+        </status>
+    </command>
+</control>
