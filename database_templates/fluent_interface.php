@@ -112,7 +112,7 @@ class IdentityObject
     // Возвращает ссылку на текующий объект (с помощью operator())
     public function eq($value)
     {
-        return $this->operator("-", $value);
+        return $this->operator("=", $value);
     }
     
     // Меньше чем
@@ -167,6 +167,11 @@ class EventIdentityObject extends \woo\mapper\IdentityObject
     {
         parent::__construct($field, array('name', 'id', 'start', 'duration', 'space'));
     }
+}
+
+class VenueIdentityObject extends IdentityObject
+{
+    
 }
 
 $idobjEvent = new EventIdentityObject;
