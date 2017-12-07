@@ -1,0 +1,14 @@
+{
+    "name": "vagrant/sandbox",
+    "type": "project",
+    "authors": [
+        {
+            "name": "grigory",
+            "email": "grigory08@ya.ru"
+        }
+    ],
+    "require": {},
+    "require-dev": {
+        "phpdocumentor/phpdocumentor": "2.*"
+    }
+}
