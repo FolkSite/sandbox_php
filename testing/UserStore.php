@@ -50,7 +50,10 @@ class UserStore
 }
 
 // Пример реализации.
+/*
 $store = new UserStore();
 $store->addUser("bob williams", "bob@example.com", "12345");
 $user = $store->getUser("bob@example.com");
 var_dump($user);
+ * 
+ */

@@ -5,7 +5,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
+require_once __DIR__ . '/../vendor/autoload.php';
 require_once 'UserStore.php';
 
 /**
@@ -41,6 +41,7 @@ class Validator
 }
 
 // Проверка реализации.
+/*
 $store = new UserStore();
 $store->addUser("bob williams", "bob@example.com", "12345");
 
@@ -48,3 +49,5 @@ $validator = new Validator($store);
 if ($validator->validateUser("bob@example.com", "12345")) {
     var_dump("Привет, друзья!");
 }
+ * 
+ */
