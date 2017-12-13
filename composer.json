@@ -7,7 +7,9 @@
             "email": "grigory08@ya.ru"
         }
     ],
-    "require": {},
+    "require": {
+        "facebook/webdriver": "^1.5"
+    },
     "require-dev": {
         "phpdocumentor/phpdocumentor": "2.*",
         "phpunit/phpunit": "^6.5"

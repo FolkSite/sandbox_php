@@ -39,7 +39,7 @@ class UserStoreTest extends TestCase
         $this->assertEquals($user['name'], "bob williams");
         $this->assertEquals($user['pass'], "12345");
     }
-    
+
     /**
      * Проверяет создает ли метод исключение если пароль меньше 5 символов.
      */
@@ -47,6 +47,23 @@ class UserStoreTest extends TestCase
     {
         $this->expectException('Exception');
         $this->store->addUser("bob williams", "bob@example.com", "ff");
+    }
+
+    /**
+     * Объект UserStore не должен разрешать добавлять одинаковые адреса почты.
+     */
+    public function testAddUserDublicate()
+    {
+        try {
+            $ret = $this->store->addUser("bob williams", "a@b.com", "12345");
+            $ret = $this->store->addUser("bob stevens", "a@b.com", "12345");
+            self::fail("Здесь должно быть вызвано исключение.");
+        } catch (Exception $exc) {
+            $const = $this->logicalAnd(
+                    $this->logicalNot($this->contains("bob stevens")), $this->isType('array')
+            );
+            self::assertThat($this->store->getUser("a@b.com"), $const);
+        }
     }
 
 }
